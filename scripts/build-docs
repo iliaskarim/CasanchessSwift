@@ -1,0 +1,43 @@
+#!/bin/bash
+set -ex
+
+# toolchain paths – adjust if Xcode is installed elsewhere
+DOCC="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/docc"
+
+# Xcode exposes the package scheme as Casanchess.
+SCHEME="Casanchess"
+
+# GitHub Pages serves project sites from a repository-named subpath. Passing
+# `--no-base` on the command line will disable this behavior and omit the flag
+# entirely (resulting in root-relative resource links).
+HOSTING_BASE_PATH="/CasanchessSwift"
+
+# simple boolean flag parsing; recognize --no-base to clear the path
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-base)
+            HOSTING_BASE_PATH=""
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+done
+
+# clean docs
+rm -rf .build build docs
+
+HOSTING_ARGS=()
+[ -n "$HOSTING_BASE_PATH" ] && HOSTING_ARGS=(--hosting-base-path "$HOSTING_BASE_PATH")
+
+# build docs
+xcodebuild docbuild \
+    -scheme "$SCHEME" \
+    -destination 'platform=macOS,arch=arm64,name=My Mac' \
+    -derivedDataPath build > /dev/null
+$DOCC process-archive transform-for-static-hosting \
+    --output-path ./docs \
+    "${HOSTING_ARGS[@]}" \
+    "./build/Build/Products/Debug/$SCHEME.doccarchive" > /dev/null
