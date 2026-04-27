@@ -10,6 +10,16 @@ This repository is self-contained for SwiftPM consumers:
 - `Sources/CasanchessBridge` contains the Objective-C++ bridge and required engine headers.
 - `Artifacts/casanchess.xcframework` contains the prebuilt engine library.
 
+## Syzygy tablebases
+
+The package can bundle optional Syzygy WDL files for endgame probing. Place `.rtbw` files under:
+
+```sh
+Sources/Casanchess/syzygy/
+```
+
+Those files are intentionally ignored by git because tablebases are large. The current wrapper uses WDL probing during search; DTZ `.rtbz` files are not used.
+
 ## Build
 
 ```sh

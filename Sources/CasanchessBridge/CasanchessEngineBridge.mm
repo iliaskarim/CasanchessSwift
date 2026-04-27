@@ -6,6 +6,7 @@
 #include "Evaluation.h"
 #include "NNUE.h"
 #include "Search.h"
+#include "Syzygy.h"
 #include "Uci.h"
 #include "ZobristKeys.h"
 
@@ -44,6 +45,16 @@ CasanchessSearchResult RunSearch(Search &search, Board board, int depth) {
         search.BestMove().Notation()
     };
 }
+
+NSBundle *CasanchessModuleBundle() {
+    NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+    if(resourcePath == nil) {
+        return nil;
+    }
+
+    NSString *moduleBundlePath = [resourcePath stringByAppendingPathComponent:@"Casanchess_Casanchess.bundle"];
+    return [NSBundle bundleWithPath:moduleBundlePath];
+}
 }
 
 @implementation CasanchessEngineBridge
@@ -57,20 +68,19 @@ CasanchessSearchResult RunSearch(Search &search, Board board, int depth) {
     ZobristKeys::Init();
 
     NSString *nnuePath = nil;
-    NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
-    if(resourcePath != nil) {
-        NSString *moduleBundlePath = [resourcePath stringByAppendingPathComponent:@"Casanchess_Casanchess.bundle"];
-        NSBundle *moduleBundle = [NSBundle bundleWithPath:moduleBundlePath];
-        if(moduleBundle != nil) {
-            nnuePath = [moduleBundle pathForResource:@"network-20220625" ofType:@"nnue"];
-        }
+    NSString *syzygyPath = nil;
+    NSBundle *moduleBundle = CasanchessModuleBundle();
+    if(moduleBundle != nil) {
+        nnuePath = [moduleBundle pathForResource:@"network-20220625" ofType:@"nnue"];
+        syzygyPath = [moduleBundle pathForResource:@"syzygy" ofType:nil];
     }
 
     if(nnuePath != nil) {
         nnue.Load(std::string([nnuePath UTF8String]));
-    } else {
-        NSLog(@"ERROR: NNUE file not found in Casanchess module bundle");
-        nnue.Load();
+    }
+
+    if(syzygyPath != nil) {
+        Syzygy::Init(std::string([syzygyPath UTF8String]));
     }
 
     g_state.board.Init();
@@ -78,8 +88,35 @@ CasanchessSearchResult RunSearch(Search &search, Board board, int depth) {
     UCI_OUTPUT = false;
 }
 
++ (void)engineConfigureNNUEPath:(NSString *)nnuePath syzygyPath:(NSString *)syzygyPath {
+    if(nnuePath != nil) {
+        nnue.Load(std::string([nnuePath UTF8String]));
+    }
+
+    if(syzygyPath != nil) {
+        Syzygy::Init(std::string([syzygyPath UTF8String]));
+    }
+}
+
++ (BOOL)engineLoadSyzygyAtPath:(NSString *)path probeLimit:(int)probeLimit {
+    if(path == nil) {
+        return false;
+    }
+
+    UCI_SYZYGY_PROBE_LIMIT = std::clamp(probeLimit, 0, 7);
+    return Syzygy::Init(std::string([path UTF8String])) > 0;
+}
+
 + (void)engineResetGame {
     g_state.board.Init();
+}
+
++ (void)engineSetPositionFen:(NSString *)fen {
+    if(fen == nil) {
+        return;
+    }
+
+    g_state.board.SetFen(std::string([fen UTF8String]));
 }
 
 + (BOOL)engineApplyMove:(NSString *)uciMove {

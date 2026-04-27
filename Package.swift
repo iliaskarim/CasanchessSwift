@@ -16,6 +16,7 @@ let package = Package(
             dependencies: ["CasanchessBridge"],
             resources: [
                 .copy("network-20220625.nnue"),
+                .copy("syzygy"),
             ]
         ),
         .target(
@@ -30,6 +31,10 @@ let package = Package(
         .binaryTarget(
             name: "casanchess",
             path: "Artifacts/casanchess.xcframework"
+        ),
+        .testTarget(
+            name: "CasanchessTests",
+            dependencies: ["Casanchess"]
         ),
     ],
     cxxLanguageStandard: .cxx20

@@ -7,7 +7,10 @@ typedef void (^CasanchessEvaluationUpdateBlock)(float score, BOOL isFinal);
 typedef void (^CasanchessBestMoveBlock)(NSString * _Nullable bestMoveUci);
 
 @interface CasanchessEngineBridge : NSObject
++ (void)engineConfigureNNUEPath:(NSString * _Nullable)nnuePath syzygyPath:(NSString * _Nullable)syzygyPath;
++ (BOOL)engineLoadSyzygyAtPath:(NSString *)path probeLimit:(int)probeLimit;
 + (void)engineResetGame;
++ (void)engineSetPositionFen:(NSString *)fen;
 + (BOOL)engineApplyMove:(NSString *)uciMove;
 + (void)engineEvaluateWithDepth:(int)depth callback:(CasanchessEvaluationUpdateBlock)callback;
 + (void)engineBestMoveWithDepth:(int)depth callback:(CasanchessBestMoveBlock)callback;

@@ -7,10 +7,33 @@ public final class CasanchessEngine {
     /// The shared engine instance for managing a single Casanchess game.
     public static let shared = CasanchessEngine()
 
-    private init() {}
+    private init() {
+        CasanchessEngineBridge.engineConfigureNNUEPath(
+            Bundle.module.path(forResource: "network-20220625", ofType: "nnue"),
+            syzygyPath: Bundle.module.path(forResource: "syzygy", ofType: nil)
+        )
+    }
+
+    /// Loads Syzygy WDL tablebases from a directory.
+    /// - Parameters:
+    ///   - path: Directory containing `.rtbw` files.
+    ///   - probeLimit: Maximum piece count to probe, usually 5, 6, or 7.
+    /// - Returns: `true` when tablebase files were found and initialized.
+    public func loadSyzygy(path: String, probeLimit: Int = 7) -> Bool {
+        CasanchessEngineBridge.engineLoadSyzygy(
+            atPath: path,
+            probeLimit: Int32(probeLimit)
+        )
+    }
 
     /// Resets the current game to its initial position.
     public func resetGame() { CasanchessEngineBridge.engineResetGame() }
+
+    /// Sets the current game position from a FEN string.
+    /// - Parameter fen: Full or simplified FEN accepted by the engine.
+    public func setPosition(fen: String) {
+        CasanchessEngineBridge.engineSetPositionFen(fen)
+    }
 
     /// Applies a move to the current game.
     /// - Parameter uciMove: The move to apply, encoded in UCI notation.
